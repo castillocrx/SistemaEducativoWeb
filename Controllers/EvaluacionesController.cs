@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -18,19 +17,23 @@ namespace SistemaEducativoWeb.Controllers
             _context = context;
         }
 
-        // GET: Evaluacions
+        // GET: Evaluaciones
         public async Task<IActionResult> Index()
         {
-            var sistemaEducativoWebContext = _context.Evaluacion.Include(e => e.Curso).Include(e => e.Estudiante);
-            return View(await sistemaEducativoWebContext.ToListAsync());
+            var evaluaciones = await _context.Evaluacion
+                .Include(e => e.Curso)
+                .Include(e => e.Estudiante)
+                .ToListAsync();
+
+            return View(evaluaciones);
         }
 
-        // GET: Evaluacions/Details/5
+        // GET: Evaluaciones/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
             {
-                return NotFound();
+                return BadRequest("El ID no puede ser nulo.");
             }
 
             var evaluacion = await _context.Evaluacion
@@ -39,13 +42,13 @@ namespace SistemaEducativoWeb.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (evaluacion == null)
             {
-                return NotFound();
+                return NotFound("Evaluación no encontrada.");
             }
 
             return View(evaluacion);
         }
 
-        // GET: Evaluacions/Create
+        // GET: Evaluaciones/Create
         public IActionResult Create()
         {
             ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre");
@@ -53,52 +56,56 @@ namespace SistemaEducativoWeb.Controllers
             return View();
         }
 
-        // POST: Evaluacions/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Evaluaciones/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,EstudianteId,CursoId,FechaEvaluacion,Calificacion,Comentarios")] Evaluacion evaluacion)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(evaluacion);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(evaluacion);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Evaluación creada exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear la evaluación: {ex.Message}";
+                }
             }
             ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre", evaluacion.CursoId);
             ViewData["EstudianteId"] = new SelectList(_context.Estudiante, "Id", "Apellidos", evaluacion.EstudianteId);
             return View(evaluacion);
         }
 
-        // GET: Evaluacions/Edit/5
+        // GET: Evaluaciones/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
             {
-                return NotFound();
+                return BadRequest("El ID no puede ser nulo.");
             }
 
             var evaluacion = await _context.Evaluacion.FindAsync(id);
             if (evaluacion == null)
             {
-                return NotFound();
+                return NotFound("Evaluación no encontrada.");
             }
             ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre", evaluacion.CursoId);
             ViewData["EstudianteId"] = new SelectList(_context.Estudiante, "Id", "Apellidos", evaluacion.EstudianteId);
             return View(evaluacion);
         }
 
-        // POST: Evaluacions/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Evaluaciones/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,EstudianteId,CursoId,FechaEvaluacion,Calificacion,Comentarios")] Evaluacion evaluacion)
         {
             if (id != evaluacion.Id)
             {
-                return NotFound();
+                return BadRequest("El ID de la evaluación no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -107,31 +114,33 @@ namespace SistemaEducativoWeb.Controllers
                 {
                     _context.Update(evaluacion);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Evaluación actualizada exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!EvaluacionExists(evaluacion.Id))
                     {
-                        return NotFound();
+                        return NotFound("Evaluación no encontrada.");
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al editar la evaluación: {ex.Message}";
+                }
             }
-            ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre", evaluacion.CursoId);
+            ViewData["CursoId"] = new SelectList(_context.Curso, "Id", " Nombre", evaluacion.CursoId);
             ViewData["EstudianteId"] = new SelectList(_context.Estudiante, "Id", "Apellidos", evaluacion.EstudianteId);
             return View(evaluacion);
         }
 
-        // GET: Evaluacions/Delete/5
+        // GET: Evaluaciones/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
-                return NotFound();
+                return BadRequest("El ID no puede ser nulo.");
             }
 
             var evaluacion = await _context.Evaluacion
@@ -140,25 +149,33 @@ namespace SistemaEducativoWeb.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (evaluacion == null)
             {
-                return NotFound();
+                return NotFound("Evaluación no encontrada.");
             }
 
             return View(evaluacion);
         }
 
-        // POST: Evaluacions/Delete/5
+        // POST: Evaluaciones/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var evaluacion = await _context.Evaluacion.FindAsync(id);
-            if (evaluacion != null)
+            try
             {
-                _context.Evaluacion.Remove(evaluacion);
+                var evaluacion = await _context.Evaluacion.FindAsync(id);
+                if (evaluacion != null)
+                {
+                    _context.Evaluacion.Remove(evaluacion);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Evaluación eliminada exitosamente.";
+                }
+                return RedirectToAction(nameof(Index));
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al eliminar la evaluación: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         private bool EvaluacionExists(int id)

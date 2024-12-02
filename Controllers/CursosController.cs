@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +20,12 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Cursos
         public async Task<IActionResult> Index()
         {
-            var sistemaEducativoWebContext = _context.Curso.Include(c => c.Programa).Include(c => c.Tutor);
-            return View(await sistemaEducativoWebContext.ToListAsync());
+            var cursos = await _context.Curso
+                .Include(c => c.Programa)
+                .Include(c => c.Tutor)
+                .ToListAsync();
+
+            return View(cursos);
         }
 
         // GET: Cursos/Details/5
@@ -30,16 +33,17 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del curso no puede ser nulo.");
             }
 
             var curso = await _context.Curso
                 .Include(c => c.Programa)
                 .Include(c => c.Tutor)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (curso == null)
             {
-                return NotFound();
+                return NotFound("Curso no encontrado.");
             }
 
             return View(curso);
@@ -54,20 +58,26 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Cursos/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,Duracion,TutorId,ProgramaId")] Curso curso)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(curso);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(curso);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Curso creado exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear el curso: {ex.Message}";
+                }
             }
-            ViewData["ProgramaId"] = new SelectList(_context.Programa, "Id", "Nombre", curso.ProgramaId);
-            ViewData["TutorId"] = new SelectList(_context.Tutor, "Id", "Apellidos", curso.TutorId);
+
+            await CargarDatosSelect(curso);
             return View(curso);
         }
 
@@ -76,29 +86,27 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del curso no puede ser nulo.");
             }
 
             var curso = await _context.Curso.FindAsync(id);
             if (curso == null)
             {
-                return NotFound();
+                return NotFound("Curso no encontrado.");
             }
-            ViewData["ProgramaId"] = new SelectList(_context.Programa, "Id", "Nombre", curso.ProgramaId);
-            ViewData["TutorId"] = new SelectList(_context.Tutor, "Id", "Apellidos", curso.TutorId);
+
+            await CargarDatosSelect(curso);
             return View(curso);
         }
 
         // POST: Cursos/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,Duracion,TutorId,ProgramaId")] Curso curso)
         {
             if (id != curso.Id)
             {
-                return NotFound();
+                return NotFound("El ID del curso no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -107,22 +115,24 @@ namespace SistemaEducativoWeb.Controllers
                 {
                     _context.Update(curso);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Curso actualizado exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!CursoExists(curso.Id))
                     {
-                        return NotFound();
+                        return NotFound("Curso no encontrado.");
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al actualizar el curso: {ex.Message}";
+                }
             }
-            ViewData["ProgramaId"] = new SelectList(_context.Programa, "Id", "Nombre", curso.ProgramaId);
-            ViewData["TutorId"] = new SelectList(_context.Tutor, "Id", "Apellidos", curso.TutorId);
+
+            await CargarDatosSelect(curso);
             return View(curso);
         }
 
@@ -131,16 +141,17 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del curso no puede ser nulo.");
             }
 
             var curso = await _context.Curso
                 .Include(c => c.Programa)
                 .Include(c => c.Tutor)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (curso == null)
             {
-                return NotFound();
+                return NotFound("Curso no encontrado.");
             }
 
             return View(curso);
@@ -155,15 +166,26 @@ namespace SistemaEducativoWeb.Controllers
             if (curso != null)
             {
                 _context.Curso.Remove(curso);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Curso eliminado exitosamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al eliminar el curso: curso no encontrado.";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool CursoExists(int id)
         {
             return _context.Curso.Any(e => e.Id == id);
+        }
+
+        private async Task CargarDatosSelect(Curso curso)
+        {
+            ViewData["ProgramaId"] = new SelectList(await _context.Programa.ToListAsync(), "Id", "Nombre", curso.ProgramaId);
+            ViewData["TutorId"] = new SelectList(await _context.Tutor.ToListAsync(), "Id", "Apellidos", curso.TutorId);
         }
     }
 }

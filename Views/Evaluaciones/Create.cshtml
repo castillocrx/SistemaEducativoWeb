@@ -1,51 +1,78 @@
 ﻿@model SistemaEducativoWeb.Models.Evaluacion
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Crear Evaluación";
 }
 
-<h1>Create</h1>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
+<div class="container mt-4">
+    <h1 class="text-center">Crear Evaluación</h1>
+    <h4 class="text-muted">Información de la Evaluación</h4>
+    <hr />
 
-<h4>Evaluacion</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="EstudianteId" class="control-label"></label>
-                <select asp-for="EstudianteId" class ="form-control" asp-items="ViewBag.EstudianteId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="CursoId" class="control-label"></label>
-                <select asp-for="CursoId" class ="form-control" asp-items="ViewBag.CursoId"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="FechaEvaluacion" class="control-label"></label>
-                <input asp-for="FechaEvaluacion" class="form-control" />
-                <span asp-validation-for="FechaEvaluacion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Calificacion" class="control-label"></label>
-                <input asp-for="Calificacion" class="form-control" />
-                <span asp-validation-for="Calificacion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Comentarios" class="control-label"></label>
-                <input asp-for="Comentarios" class="form-control" />
-                <span asp-validation-for="Comentarios" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <form asp-action="Create" class="bg-light p-4 rounded shadow">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="EstudianteId" class="form-label"></label>
+                    <select asp-for="EstudianteId" class="form-select" asp-items="ViewBag.EstudianteId"></select>
+                    <span asp-validation-for="EstudianteId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="CursoId" class="form-label"></label>
+                    <select asp-for="CursoId" class="form-select" asp-items="ViewBag.CursoId"></select>
+                    <span asp-validation-for="CursoId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="FechaEvaluacion" class="form-label"></label>
+                    <input asp-for="FechaEvaluacion" class="form-control" type="date" />
+                    <span asp-validation-for="FechaEvaluacion" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Calificacion" class="form-label"></label>
+                    <input asp-for="Calificacion" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="Calificacion" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Comentarios" class="form-label"></label>
+                    <textarea asp-for="Comentarios" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Comentarios" class="text-danger"></span>
+                </div>
+
+                <div class="text-center">
+                    <input type="submit" value="Crear" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a asp-action="Index" class="btn btn-link"><i class="bi bi-arrow-left"></i> Volver a la lista</a>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

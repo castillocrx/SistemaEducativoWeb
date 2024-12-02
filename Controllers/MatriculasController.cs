@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -21,8 +20,12 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Matriculas
         public async Task<IActionResult> Index()
         {
-            var sistemaEducativoWebContext = _context.Matricula.Include(m => m.Curso).Include(m => m.Estudiante);
-            return View(await sistemaEducativoWebContext.ToListAsync());
+            var matriculas = await _context.Matricula
+                .Include(m => m.Curso)
+                .Include(m => m.Estudiante)
+                .ToListAsync();
+
+            return View(matriculas);
         }
 
         // GET: Matriculas/Details/5
@@ -30,7 +33,7 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return BadRequest("El ID no puede ser nulo.");
             }
 
             var matricula = await _context.Matricula
@@ -39,7 +42,7 @@ namespace SistemaEducativoWeb.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (matricula == null)
             {
-                return NotFound();
+                return NotFound("Matrícula no encontrada.");
             }
 
             return View(matricula);
@@ -54,17 +57,23 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Matriculas/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,EstudianteId,CursoId,Estado,FechaInscripcion")] Matricula matricula)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(matricula);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(matricula);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Matrícula creada exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear la matrícula: {ex.Message}";
+                }
             }
             ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre", matricula.CursoId);
             ViewData["EstudianteId"] = new SelectList(_context.Estudiante, "Id", "Apellidos", matricula.EstudianteId);
@@ -76,13 +85,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return BadRequest("El ID no puede ser nulo.");
             }
 
             var matricula = await _context.Matricula.FindAsync(id);
             if (matricula == null)
             {
-                return NotFound();
+                return NotFound("Matrícula no encontrada.");
             }
             ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre", matricula.CursoId);
             ViewData["EstudianteId"] = new SelectList(_context.Estudiante, "Id", "Apellidos", matricula.EstudianteId);
@@ -90,15 +99,13 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Matriculas/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,EstudianteId,CursoId,Estado,FechaInscripcion")] Matricula matricula)
         {
             if (id != matricula.Id)
             {
-                return NotFound();
+                return BadRequest("El ID de la matrícula no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -107,19 +114,24 @@ namespace SistemaEducativoWeb.Controllers
                 {
                     _context.Update(matricula);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Matrícula actualizada exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!MatriculaExists(matricula.Id))
                     {
-                        return NotFound();
+                        return NotFound("Matrícula no encontrada.");
                     }
                     else
                     {
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al editar la matrícula: {ex.Message}";
+                }
             }
             ViewData["CursoId"] = new SelectList(_context.Curso, "Id", "Nombre", matricula.CursoId);
             ViewData["EstudianteId"] = new SelectList(_context.Estudiante, "Id", "Apellidos", matricula.EstudianteId);
@@ -131,7 +143,7 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return BadRequest("El ID no puede ser nulo.");
             }
 
             var matricula = await _context.Matricula
@@ -140,7 +152,7 @@ namespace SistemaEducativoWeb.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (matricula == null)
             {
-                return NotFound();
+                return NotFound("Matrícula no encontrada.");
             }
 
             return View(matricula);
@@ -155,9 +167,14 @@ namespace SistemaEducativoWeb.Controllers
             if (matricula != null)
             {
                 _context.Matricula.Remove(matricula);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Matrícula eliminada exitosamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al eliminar la matrícula.";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
