@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SistemaEducativoWeb.Models;
 
@@ -21,19 +19,19 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Estudiantes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Estudiante.ToListAsync());
+            var estudiantes = await _context.Estudiante.ToListAsync();
+            return View(estudiantes);
         }
 
         // GET: Estudiantes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
 
-            var estudiante = await _context.Estudiante
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var estudiante = await _context.Estudiante.FindAsync(id.Value);
             if (estudiante == null)
             {
                 return NotFound();
@@ -49,17 +47,23 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Estudiantes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Nombre,Apellidos,Correo,Telefono,FechaNacimiento,FechaRegistro")] Estudiante estudiante)
+        public async Task<IActionResult> Create([Bind("Nombre,Apellidos,Correo,Telefono,FechaNacimiento,FechaRegistro")] Estudiante estudiante)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(estudiante);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(estudiante);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Estudiante creado exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear el estudiante: {ex.Message}";
+                }
             }
             return View(estudiante);
         }
@@ -67,12 +71,12 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Estudiantes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
 
-            var estudiante = await _context.Estudiante.FindAsync(id);
+            var estudiante = await _context.Estudiante.FindAsync(id.Value);
             if (estudiante == null)
             {
                 return NotFound();
@@ -81,8 +85,6 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Estudiantes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Apellidos,Correo,Telefono,FechaNacimiento,FechaRegistro")] Estudiante estudiante)
@@ -98,6 +100,8 @@ namespace SistemaEducativoWeb.Controllers
                 {
                     _context.Update(estudiante);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Estudiante actualizado exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -105,12 +109,12 @@ namespace SistemaEducativoWeb.Controllers
                     {
                         return NotFound();
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw; // Re-throwing the exception if the student still exists.
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al actualizar el estudiante: {ex.Message}";
+                }
             }
             return View(estudiante);
         }
@@ -118,13 +122,12 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Estudiantes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            if (!id.HasValue)
             {
                 return NotFound();
             }
 
-            var estudiante = await _context.Estudiante
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var estudiante = await _context.Estudiante.FindAsync(id.Value);
             if (estudiante == null)
             {
                 return NotFound();
@@ -138,13 +141,21 @@ namespace SistemaEducativoWeb.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var estudiante = await _context.Estudiante.FindAsync(id);
-            if (estudiante != null)
+            try
             {
-                _context.Estudiante.Remove(estudiante);
+                var estudiante = await _context.Estudiante.FindAsync(id);
+                if (estudiante != null)
+                {
+                    _context.Estudiante.Remove(estudiante);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Estudiante eliminado exitosamente.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al eliminar el estudiante: {ex.Message}";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
