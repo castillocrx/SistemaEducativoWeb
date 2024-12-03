@@ -43,16 +43,13 @@
 
                 <div class="form-group mb-3">
                     <label asp-for="Estado" class="form-label"></label>
-                    <input asp-for="Estado" class="form-control" />
+                    <select asp-for="Estado" class="form-control">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="Confirmado">Confirmado</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
                     <span asp-validation-for="Estado" class="text-danger"></span>
                 </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="FechaInscripcion" class="form-label"></label>
-                    <input asp-for="FechaInscripcion" class="form-control" type="date" />
-                    <span asp-validation-for="FechaInscripcion" class="text-danger"></span>
-                </div>
-
                 <div class="text-center">
                     <input type="submit" value="Crear" class="btn btn-primary" />
                 </div>

@@ -65,6 +65,7 @@ namespace SistemaEducativoWeb.Controllers
             {
                 try
                 {
+                    matricula.FechaInscripcion=DateTime.Now;
                     _context.Add(matricula);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Matrícula creada exitosamente.";

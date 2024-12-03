@@ -65,6 +65,7 @@ namespace SistemaEducativoWeb.Controllers
             {
                 try
                 {
+                    evaluacion.FechaEvaluacion=DateTime.Now;
                     _context.Add(evaluacion);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Evaluación creada exitosamente.";

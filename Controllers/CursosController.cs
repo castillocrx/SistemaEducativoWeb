@@ -178,15 +178,15 @@ namespace SistemaEducativoWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpGet]
-        public JsonResult ReporteCursos()
-        {
-            DT_Reporte objDT_Reporte = new DT_Reporte();
+        //[HttpGet]
+        //public JsonResult ReporteCursos()
+        //{
+        //    DT_Reporte objDT_Reporte = new DT_Reporte();
 
-            List<ReporteCursos> objLista = objDT_Reporte.ReporteCursos();
+        //    List<ReporteCursos> objLista = objDT_Reporte.ReporteCursos();
 
-            return Json(objLista, JsonRequestBehavior.AllowGet);
-        }
+        //    return Json(objLista, JsonRequestBehavior.AllowGet);
+        //}
 
         private bool CursoExists(int id)
         {

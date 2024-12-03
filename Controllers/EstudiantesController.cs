@@ -55,6 +55,7 @@ namespace SistemaEducativoWeb.Controllers
             {
                 try
                 {
+                    estudiante.FechaRegistro=DateTime.Now;
                     _context.Add(estudiante);
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "Estudiante creado exitosamente.";
