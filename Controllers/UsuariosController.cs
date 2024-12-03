@@ -21,6 +21,7 @@ namespace SistemaEducativoWeb.Controllers
             _context = context;
         }
 
+        
         // GET: Usuarios
         public async Task<IActionResult> Index()
         {
@@ -179,15 +180,16 @@ namespace SistemaEducativoWeb.Controllers
 
             if (usuario == null)
             {
-                return RedirectToAction("CrearUsuario");
+                return RedirectToAction("Create");
             }
 
          
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-        new Claim(ClaimTypes.Role, usuario.Rol.NombreRol) 
-    };
+            {
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.NombreUsuario),
+                new Claim(ClaimTypes.Role, usuario.Rol.NombreRol) 
+            };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -198,7 +200,77 @@ namespace SistemaEducativoWeb.Controllers
 
             HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Perfil");
+        }
+
+        public IActionResult Perfil()
+        {
+            var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(usuarioId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var usuario = _context.Usuario.Include(u => u.Rol) .FirstOrDefault(u => u.Id.ToString() == usuarioId);
+
+            if (usuario == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            return View(usuario);
+        }
+
+        public IActionResult EditarPerfil()
+        {
+            var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(usuarioId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var usuario = _context.Usuario.FirstOrDefault(u => u.Id.ToString() == usuarioId);
+
+            if (usuario == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            return View(usuario);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditarPerfil(Usuario usuarioEditado)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(usuarioEditado);
+            }
+
+            var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var usuario = _context.Usuario.FirstOrDefault(u => u.Id.ToString() == usuarioId);
+
+            if (usuario == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            usuario.NombreUsuario = usuarioEditado.NombreUsuario;
+            usuario.Contraseña = usuarioEditado.Contraseña;
+
+            _context.Update(usuario);
+            _context.SaveChanges();
+
+            return RedirectToAction("Perfil");
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
         }
 
 

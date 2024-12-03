@@ -1,0 +1,18 @@
+﻿@model SistemaEducativoWeb.Models.Usuario
+
+<div class="container mt-4">
+    <h2>Perfil del Usuario</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@Model.NombreUsuario</h5>
+            <p class="card-text"><strong>Nombre de usuario:</strong> @Model.NombreUsuario</p>
+            <p class="card-text"><strong>Rol:</strong> @Model.Rol.NombreRol</p>
+        </div>
+    </div>
+    <a asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@Model.Id" class="btn btn-primary">Editar Perfil</a>
+    <div class="mt-3">
+        <form asp-action="Logout" asp-controller="Usuarios" method="post">
+            <button type="submit" class="btn btn-danger">Cerrar Sesión</button>
+        </form>
+    </div>
+</div>
