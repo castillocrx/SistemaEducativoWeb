@@ -25,9 +25,13 @@
         </dl>
     </div>
     <div class="text-center mt-4">
-        <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">
-            <i class="bi bi-pencil"></i> Editar
-        </a>
+        @if (User.IsInRole("Administrador"))
+        {
+            <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+        }
+        
         <a asp-action="Index" class="btn btn-link">
             <i class="bi bi-arrow-left"></i> Volver a la lista
         </a>
