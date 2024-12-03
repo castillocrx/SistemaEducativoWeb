@@ -1,0 +1,97 @@
+﻿@model IEnumerable<SistemaEducativoWeb.Models.Curso>
+
+@{
+    ViewBag.Title = "Reportes de Estudiantes por Cursos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="page-content">
+    <div class="container-fluid">
+
+        <!-- start page title -->
+        <div class="row">
+            <div class="col-12">
+                <div class="page-title-box d-flex align-items-center justify-content-between">
+                    <h4 class="mb-sm-0">Reportes de Estudiantes por Cursos</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporte -->
+        <div class="row justify-content-center" style="margin-top:20px;">
+            <!-- Columna 1: Reporte de Ventas -->
+            <div class="col-lg-6 d-flex justify-content-center mb-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><b>Reportes de Estudiantes por Cursos</b> </div>
+                    <div class="panel-body">
+                        <canvas id="myBarChart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            // Llamada para obtener los datos de Estudiantes
+            jQuery.ajax({
+                url: '@Url.Action("ReporteCursos", "Curso")',
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('Datos de Estudiantes:', data);  // Verifica los datos recibidos
+
+                    if (data.length === 0) {
+                        alert('No se encontraron datos.');
+                        return;
+                    }
+
+                    var arrayCursos = [];
+                    var arrayEstudiantes = [];
+
+                    for (var i = 0; i < data.length; i++) {
+                        arrayCursos.push(data[i].Curso);
+                        arrayEstudiantes.push(data[i].Estudiantes);
+                    }
+
+                    var controlBar1 = document.getElementById("myBarChart");
+                    var graficoBar1 = new Chart(controlBar1, {
+                        type: 'bar',
+                        data: {
+                            labels: arrayCursos,
+                            datasets: [{
+                                label: "Total Estudiantes",
+                                backgroundColor: ["#03B100", "#0083B1", "#0800B1"],
+                                borderColor: "#000000",
+                                borderWidth: 0,
+                                data: arrayEstudiantes,
+                            }],
+                        },
+                        options: {
+                            scales: {
+                                x: {
+                                    grid: { display: true }
+                                },
+                                y: {
+                                    ticks: { min: 0 },
+                                    grid: { display: true }
+                                }
+                            },
+                            legend: { display: true }
+                        }
+                    });
+                },
+                error: function (error) {
+                    console.log('Error al obtener los datos de Estudiantes:', error);
+                }
+            });
+        });
+    </script>
+}
+
