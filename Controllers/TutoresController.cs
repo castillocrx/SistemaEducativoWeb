@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +20,8 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Tutores
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Tutor.ToListAsync());
+            var tutores = await _context.Tutor.ToListAsync();
+            return View(tutores);
         }
 
         // GET: Tutores/Details/5
@@ -29,14 +29,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del tutor no puede ser nulo.");
             }
 
-            var tutor = await _context.Tutor
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var tutor = await _context.Tutor.FindAsync(id);
             if (tutor == null)
             {
-                return NotFound();
+                return NotFound("Tutor no encontrado.");
             }
 
             return View(tutor);
@@ -49,19 +48,26 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Tutores/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nombre,Apellidos,Correo,Telefono,Especialidad,FechaRegistro")] Tutor tutor)
         {
             if (ModelState.IsValid)
             {
-                tutor.FechaRegistro = DateTime.Now;
-                _context.Add(tutor);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    tutor.FechaRegistro = DateTime.Now;
+                    _context.Add(tutor);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Tutor creado exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear el tutor: {ex.Message}";
+                }
             }
+
             return View(tutor);
         }
 
@@ -70,27 +76,26 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del tutor no puede ser nulo.");
             }
 
             var tutor = await _context.Tutor.FindAsync(id);
             if (tutor == null)
             {
-                return NotFound();
+                return NotFound("Tutor no encontrado.");
             }
+
             return View(tutor);
         }
 
         // POST: Tutores/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Apellidos,Correo,Telefono,Especialidad,FechaRegistro")] Tutor tutor)
         {
             if (id != tutor.Id)
             {
-                return NotFound();
+                return NotFound("El ID del tutor no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -100,20 +105,23 @@ namespace SistemaEducativoWeb.Controllers
                     tutor.FechaRegistro = DateTime.Now;
                     _context.Update(tutor);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Tutor actualizado exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!TutorExists(tutor.Id))
                     {
-                        return NotFound();
+                        return NotFound("Tutor no encontrado.");
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al actualizar el tutor: {ex.Message}";
+                }
             }
+
             return View(tutor);
         }
 
@@ -122,14 +130,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del tutor no puede ser nulo.");
             }
 
-            var tutor = await _context.Tutor
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var tutor = await _context.Tutor.FindAsync(id);
             if (tutor == null)
             {
-                return NotFound();
+                return NotFound("Tutor no encontrado.");
             }
 
             return View(tutor);
@@ -138,18 +145,33 @@ namespace SistemaEducativoWeb.Controllers
         // POST: Tutores/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var tutor = await _context.Tutor.FindAsync(id);
-            if (tutor != null)
+            try
             {
-                _context.Tutor.Remove(tutor);
+                var tutor = await _context.Tutor.FindAsync(id);
+                if (tutor != null)
+                {
+                    _context.Tutor.Remove(tutor);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Tutor eliminado exitosamente.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Error al eliminar el tutor: tutor no encontrado.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al eliminar el tutor: {ex.Message}";
             }
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index");
         }
 
+        
+
+        
         private bool TutorExists(int id)
         {
             return _context.Tutor.Any(e => e.Id == id);

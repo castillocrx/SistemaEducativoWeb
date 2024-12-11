@@ -21,7 +21,8 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Roles
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Rol.ToListAsync());
+            var roles = await _context.Rol.ToListAsync();
+            return View(roles);
         }
 
         // GET: Roles/Details/5
@@ -29,14 +30,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del rol no puede ser nulo.");
             }
 
-            var rol = await _context.Rol
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var rol = await _context.Rol.FindAsync(id);
             if (rol == null)
             {
-                return NotFound();
+                return NotFound("Rol no encontrado.");
             }
 
             return View(rol);
@@ -49,18 +49,25 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Roles/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,NombreRol,Descripcion")] Rol rol)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(rol);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(rol);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Rol creado exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear el rol: {ex.Message}";
+                }
             }
+
             return View(rol);
         }
 
@@ -69,27 +76,26 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del rol no puede ser nulo.");
             }
 
             var rol = await _context.Rol.FindAsync(id);
             if (rol == null)
             {
-                return NotFound();
+                return NotFound("Rol no encontrado.");
             }
+
             return View(rol);
         }
 
         // POST: Roles/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,NombreRol,Descripcion")] Rol rol)
         {
             if (id != rol.Id)
             {
-                return NotFound();
+                return NotFound("El ID del rol no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -98,20 +104,23 @@ namespace SistemaEducativoWeb.Controllers
                 {
                     _context.Update(rol);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Rol actualizado exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!RolExists(rol.Id))
                     {
-                        return NotFound();
+                        return NotFound("Rol no encontrado.");
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al actualizar el rol: {ex.Message}";
+                }
             }
+
             return View(rol);
         }
 
@@ -120,14 +129,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del rol no puede ser nulo.");
             }
 
-            var rol = await _context.Rol
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var rol = await _context.Rol.FindAsync(id);
             if (rol == null)
             {
-                return NotFound();
+                return NotFound("Rol no encontrado.");
             }
 
             return View(rol);
@@ -142,9 +150,14 @@ namespace SistemaEducativoWeb.Controllers
             if (rol != null)
             {
                 _context.Rol.Remove(rol);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Rol eliminado exitosamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al eliminar el rol: rol no encontrado.";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
