@@ -21,12 +21,11 @@ namespace SistemaEducativoWeb.Controllers
             _context = context;
         }
 
-        
         // GET: Usuarios
         public async Task<IActionResult> Index()
         {
-            var sistemaEducativoWebContext = _context.Usuario.Include(u => u.Rol);
-            return View(await sistemaEducativoWebContext.ToListAsync());
+            var usuarios = await _context.Usuario.Include(u => u.Rol).ToListAsync();
+            return View(usuarios);
         }
 
         // GET: Usuarios/Details/5
@@ -34,15 +33,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del usuario no puede ser nulo.");
             }
 
-            var usuario = await _context.Usuario
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var usuario = await _context.Usuario.Include(u => u.Rol).FirstOrDefaultAsync(m => m.Id == id);
             if (usuario == null)
             {
-                return NotFound();
+                return NotFound("Usuario no encontrado.");
             }
 
             return View(usuario);
@@ -51,25 +48,31 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Usuarios/Create
         public IActionResult Create()
         {
-            ViewData["RolId"] = new SelectList(_context.Rol, "Id", "NombreRol");
+            CargarRoles();
             return View();
         }
 
         // POST: Usuarios/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,NombreUsuario,Contraseña,RolId,FechaCreacion")] Usuario usuario)
         {
             if (ModelState.IsValid)
             {
-                usuario.FechaCreacion = DateTime.Now;
-                _context.Add(usuario);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    usuario.FechaCreacion = DateTime.Now;
+                    _context.Add(usuario);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Usuario creado exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear el usuario: {ex.Message}";
+                }
             }
-            ViewData["RolId"] = new SelectList(_context.Rol, "Id", "NombreRol", usuario.RolId);
+            CargarRoles(usuario.RolId);
             return View(usuario);
         }
 
@@ -78,28 +81,26 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del usuario no puede ser nulo.");
             }
 
             var usuario = await _context.Usuario.FindAsync(id);
             if (usuario == null)
             {
-                return NotFound();
+                return NotFound("Usuario no encontrado.");
             }
-            ViewData["RolId"] = new SelectList(_context.Rol, "Id", "NombreRol", usuario.RolId);
+            CargarRoles(usuario.RolId);
             return View(usuario);
         }
 
         // POST: Usuarios/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,NombreUsuario,Contraseña,RolId,FechaCreacion")] Usuario usuario)
         {
             if (id != usuario.Id)
             {
-                return NotFound();
+                return NotFound("El ID del usuario no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -109,21 +110,23 @@ namespace SistemaEducativoWeb.Controllers
                     usuario.FechaCreacion = DateTime.Now;
                     _context.Update(usuario);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Usuario actualizado exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!UsuarioExists(usuario.Id))
                     {
-                        return NotFound();
+                        return NotFound("Usuario no encontrado.");
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al actualizar el usuario: {ex.Message}";
+                }
             }
-            ViewData["RolId"] = new SelectList(_context.Rol, "Id", "NombreRol", usuario.RolId);
+            CargarRoles(usuario.RolId);
             return View(usuario);
         }
 
@@ -132,15 +135,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del usuario no puede ser nulo.");
             }
 
-            var usuario = await _context.Usuario
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var usuario = await _context.Usuario.Include(u => u.Rol).FirstOrDefaultAsync(m => m.Id == id);
             if (usuario == null)
             {
-                return NotFound();
+                return NotFound("Usuario no encontrado.");
             }
 
             return View(usuario);
@@ -155,9 +156,14 @@ namespace SistemaEducativoWeb.Controllers
             if (usuario != null)
             {
                 _context.Usuario.Remove(usuario);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Usuario eliminado exitosamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage "] = "Error al eliminar el usuario: usuario no encontrado.";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -174,8 +180,7 @@ namespace SistemaEducativoWeb.Controllers
         [HttpPost]
         public IActionResult Login(string nombreUsuario, string contraseña)
         {
-            var usuario = _context.Usuario
-                .Include(u => u.Rol) 
+            var usuario = _context.Usuario.Include(u => u.Rol)
                 .FirstOrDefault(u => u.NombreUsuario == nombreUsuario && u.Contraseña == contraseña);
 
             if (usuario == null)
@@ -183,37 +188,29 @@ namespace SistemaEducativoWeb.Controllers
                 return RedirectToAction("Create");
             }
 
-         
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                 new Claim(ClaimTypes.Name, usuario.NombreUsuario),
-                new Claim(ClaimTypes.Role, usuario.Rol.NombreRol) 
+                new Claim(ClaimTypes.Role, usuario.Rol.NombreRol)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true 
-            };
+            var authProperties = new AuthenticationProperties { IsPersistent = true };
 
             HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
             return RedirectToAction("Perfil");
         }
 
         public IActionResult Perfil()
         {
             var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(usuarioId))
             {
                 return RedirectToAction("Login");
             }
 
-            var usuario = _context.Usuario.Include(u => u.Rol) .FirstOrDefault(u => u.Id.ToString() == usuarioId);
-
+            var usuario = _context.Usuario.Include(u => u.Rol).FirstOrDefault(u => u.Id.ToString() == usuarioId);
             if (usuario == null)
             {
                 return RedirectToAction("Login");
@@ -225,14 +222,12 @@ namespace SistemaEducativoWeb.Controllers
         public IActionResult EditarPerfil()
         {
             var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(usuarioId))
             {
                 return RedirectToAction("Login");
             }
 
             var usuario = _context.Usuario.FirstOrDefault(u => u.Id.ToString() == usuarioId);
-
             if (usuario == null)
             {
                 return RedirectToAction("Login");
@@ -252,7 +247,6 @@ namespace SistemaEducativoWeb.Controllers
 
             var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var usuario = _context.Usuario.FirstOrDefault(u => u.Id.ToString() == usuarioId);
-
             if (usuario == null)
             {
                 return RedirectToAction("Login");
@@ -273,6 +267,9 @@ namespace SistemaEducativoWeb.Controllers
             return RedirectToAction("Login");
         }
 
-
+        private void CargarRoles(int? selectedRoleId = null)
+        {
+            ViewData["RolId"] = new SelectList(_context.Rol.ToList(), "Id", "NombreRol", selectedRoleId);
+        }
     }
 }

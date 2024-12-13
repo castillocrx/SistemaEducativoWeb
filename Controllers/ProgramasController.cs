@@ -21,7 +21,8 @@ namespace SistemaEducativoWeb.Controllers
         // GET: Programas
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Programa.ToListAsync());
+            var programas = await _context.Programa.ToListAsync();
+            return View(programas);
         }
 
         // GET: Programas/Details/5
@@ -29,14 +30,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del programa no puede ser nulo.");
             }
 
-            var programa = await _context.Programa
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var programa = await _context.Programa.FirstOrDefaultAsync(m => m.Id == id);
             if (programa == null)
             {
-                return NotFound();
+                return NotFound("Programa no encontrado.");
             }
 
             return View(programa);
@@ -49,17 +49,23 @@ namespace SistemaEducativoWeb.Controllers
         }
 
         // POST: Programas/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Nombre,Descripcion,Duracion,FechaInicio,FechaFin,Estado")] Programa programa)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(programa);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    _context.Add(programa);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Programa creado exitosamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al crear el programa: {ex.Message}";
+                }
             }
             return View(programa);
         }
@@ -69,27 +75,25 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del programa no puede ser nulo.");
             }
 
             var programa = await _context.Programa.FindAsync(id);
             if (programa == null)
             {
-                return NotFound();
+                return NotFound("Programa no encontrado.");
             }
             return View(programa);
         }
 
         // POST: Programas/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Nombre,Descripcion,Duracion,FechaInicio,FechaFin,Estado")] Programa programa)
         {
             if (id != programa.Id)
             {
-                return NotFound();
+                return NotFound("El ID del programa no coincide.");
             }
 
             if (ModelState.IsValid)
@@ -98,19 +102,21 @@ namespace SistemaEducativoWeb.Controllers
                 {
                     _context.Update(programa);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Programa actualizado exitosamente.";
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!ProgramaExists(programa.Id))
                     {
-                        return NotFound();
+                        return NotFound("Programa no encontrado.");
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = $"Error al actualizar el programa: {ex.Message}";
+                }
             }
             return View(programa);
         }
@@ -120,14 +126,13 @@ namespace SistemaEducativoWeb.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return NotFound("El ID del programa no puede ser nulo.");
             }
 
-            var programa = await _context.Programa
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var programa = await _context.Programa.FirstOrDefaultAsync(m => m.Id == id);
             if (programa == null)
             {
-                return NotFound();
+                return NotFound("Programa no encontrado.");
             }
 
             return View(programa);
@@ -142,9 +147,14 @@ namespace SistemaEducativoWeb.Controllers
             if (programa != null)
             {
                 _context.Programa.Remove(programa);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Programa eliminado exitosamente.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al eliminar el programa: programa no encontrado.";
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -152,5 +162,6 @@ namespace SistemaEducativoWeb.Controllers
         {
             return _context.Programa.Any(e => e.Id == id);
         }
+
     }
 }
