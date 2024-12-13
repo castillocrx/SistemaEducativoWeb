@@ -1,42 +1,32 @@
 ﻿@model SistemaEducativoWeb.Models.Usuario
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalles del Usuario";
 }
 
-<h1>Details</h1>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet">
+<div class="container mt-4">
+    <h1 class="text-center">Detalles del Usuario</h1>
 
-<div>
-    <h4>Usuario</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.NombreUsuario)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.NombreUsuario)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Contraseña)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Contraseña)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Rol)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Rol.NombreRol)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.FechaCreacion)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.FechaCreacion)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="bg-light p-4 rounded shadow">
+        <h4 class="text-muted">Información del Usuario</h4>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">@Html.DisplayNameFor(model => model.NombreUsuario)</dt>
+            <dd class="col-sm-10">@Model.NombreUsuario</dd>
+            <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Rol.NombreRol)</dt>
+            <dd class="col-sm-10">@Model.Rol.NombreRol</dd>
+            <dt class="col-sm-2">@Html.DisplayNameFor(model => model.FechaCreacion)</dt>
+            <dd class="col-sm-10">@Model.FechaCreacion.ToShortDateString()</dd>
+        </dl>
+    </div>
+
+    <div class="text-center mt-4">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a asp-action="Index" class="btn btn-link">
+            <i class="bi bi-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
 </div>
