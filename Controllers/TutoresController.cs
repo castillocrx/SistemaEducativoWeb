@@ -11,10 +11,12 @@ namespace SistemaEducativoWeb.Controllers
     public class TutoresController : Controller
     {
         private readonly SistemaEducativoWebContext _context;
+        private readonly ApiService _apiService;
 
-        public TutoresController(SistemaEducativoWebContext context)
+        public TutoresController(SistemaEducativoWebContext context, ApiService apiService)
         {
             _context = context;
+            _apiService = apiService;
         }
 
         // GET: Tutores
@@ -169,9 +171,20 @@ namespace SistemaEducativoWeb.Controllers
             return RedirectToAction("Index");
         }
 
-        
+        public async Task<IActionResult> TutoresDesdeApi()
+        {
+            try
+            {
+                var tutores = await _apiService.GetTutoresFromApiAsync();
+                return View(tutores); 
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error al obtener los tutores desde la API: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
-        
         private bool TutorExists(int id)
         {
             return _context.Tutor.Any(e => e.Id == id);

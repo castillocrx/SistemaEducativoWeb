@@ -36,6 +36,9 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Tutores" asp-action="Index">Gestionar Tutores</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Reportes" asp-action="ReporteCursos">Reporte de Matriculas</a>
+                            </li>
                         }
                         @if (User.IsInRole("Tutor"))
                         {                         
@@ -50,6 +53,9 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Matriculas" asp-action="Index">Gestionar Matriculas</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Tutores" asp-action="TutoresDesdeApi">Ver Tutores</a>
                             </li>
                         }     
                         <li class="nav-item">

@@ -10,6 +10,7 @@ builder.Services.AddDbContext<SistemaEducativoWebContext>(op =>
 {
     op.UseSqlServer(builder.Configuration.GetConnectionString("SistemaEducativoWeb"));
 });
+builder.Services.AddHttpClient<ApiService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

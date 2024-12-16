@@ -18,7 +18,15 @@ namespace SistemaEducativoWeb.Models
         public DbSet<Tutor> Tutor { get; set; }
         public DbSet<Rol> Rol { get; set; }
         public DbSet<Usuario> Usuario { get; set; }
-        public DbSet<Matricula> Matricula { get; set; } 
+        public DbSet<Matricula> Matricula { get; set; }
+        public DbSet<ReporteCursos> ReporteCursos { get; set; }
+
+        public async Task<List<ReporteCursos>> GetCantidadEstudiantesCursosAsync()
+        {
+            return await this.Set<ReporteCursos>()
+                             .FromSqlRaw("EXEC SP_CantidadEstudiantesCursos")
+                             .ToListAsync();
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -89,6 +97,10 @@ namespace SistemaEducativoWeb.Models
                 matricula.HasOne(m => m.Estudiante).WithMany(e => e.Matriculas).HasForeignKey(m => m.EstudianteId);
                 matricula.HasOne(m => m.Curso).WithMany(c => c.Matriculas).HasForeignKey(m => m.CursoId);
             });
+
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ReporteCursos>().HasNoKey();
 
         }
 

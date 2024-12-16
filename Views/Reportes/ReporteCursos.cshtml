@@ -1,0 +1,50 @@
+﻿@model IEnumerable<ReporteCursos>
+
+<div>
+    <canvas id="graficoPastel" width="133" height="133"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    var etiquetas = @Html.Raw(Json.Serialize(Model.Select(m => m.Curso)));
+    var valores = @Html.Raw(Json.Serialize(Model.Select(m => m.Estudiantes)));
+
+    var ctx = document.getElementById('graficoPastel').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                data: valores,
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Cantidad de Estudiantes por Curso'
+                }
+            }
+        }
+    });
+</script>
