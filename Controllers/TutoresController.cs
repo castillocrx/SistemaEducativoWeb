@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using SistemaEducativoWeb.Models;
 
 namespace SistemaEducativoWeb.Controllers
@@ -11,12 +14,13 @@ namespace SistemaEducativoWeb.Controllers
     public class TutoresController : Controller
     {
         private readonly SistemaEducativoWebContext _context;
-        private readonly ApiService _apiService;
+        private readonly HttpClient _httpClient;
 
-        public TutoresController(SistemaEducativoWebContext context, ApiService apiService)
+        public TutoresController(SistemaEducativoWebContext context, IHttpClientFactory clientFactory)
         {
             _context = context;
-            _apiService = apiService;
+            _httpClient = clientFactory.CreateClient();
+            _httpClient.BaseAddress = new Uri("https://localhost:7007/");
         }
 
         // GET: Tutores
@@ -171,18 +175,32 @@ namespace SistemaEducativoWeb.Controllers
             return RedirectToAction("Index");
         }
 
+        // GET: Tutores
         public async Task<IActionResult> TutoresDesdeApi()
         {
+            var tutoresDB = await _context.Tutor.ToListAsync();
+
+            List<Tutor> tutoresAPI = new();
             try
             {
-                var tutores = await _apiService.GetTutoresFromApiAsync();
-                return View(tutores); 
+                var response = await _httpClient.GetAsync("api/TutoresApi"); 
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    tutoresAPI = System.Text.Json.JsonSerializer.Deserialize<List<Tutor>>(jsonString, new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = $"Error al obtener los tutores desde la API: {ex.Message}";
-                return RedirectToAction(nameof(Index));
+                TempData["ErrorMessage"] = $"Error al obtener datos de la API: {ex.Message}";
             }
+
+            var todosTutores = tutoresDB.Union(tutoresAPI).ToList();
+
+            return View(todosTutores);
         }
 
         private bool TutorExists(int id)

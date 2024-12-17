@@ -10,7 +10,6 @@ builder.Services.AddDbContext<SistemaEducativoWebContext>(op =>
 {
     op.UseSqlServer(builder.Configuration.GetConnectionString("SistemaEducativoWeb"));
 });
-builder.Services.AddHttpClient<ApiService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -20,6 +19,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -38,6 +38,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Usuarios}/{action=Login}/{id?}");

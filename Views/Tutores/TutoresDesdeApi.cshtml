@@ -1,34 +1,40 @@
-﻿@model List<Tutor>
+﻿@model IEnumerable<Tutor>
 
-<h1>Tutores desde la API</h1>
+@{
+    ViewData["Title"] = "Lista de Tutores";
+}
 
-@if (Model.Count > 0)
+<h2>Lista de Tutores</h2>
+
+@if (ViewBag.ErrorMessage != null)
 {
-    <table>
-        <thead>
+    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>Apellidos</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Especialidad</th>
+            <th>Fecha Registro</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tutor in Model)
+        {
             <tr>
-                <th>Nombre</th>
-                <th>Apellidos</th>
-                <th>Correo</th>
-                <th>Teléfono</th>
-                <th>Especialidad</th>
+                <td>@tutor.Id</td>
+                <td>@tutor.Nombre</td>
+                <td>@tutor.Apellidos</td>
+                <td>@tutor.Correo</td>
+                <td>@tutor.Telefono</td>
+                <td>@tutor.Especialidad</td>
+                <td>@tutor.FechaRegistro.ToShortDateString()</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var tutor in Model)
-            {
-                <tr>
-                    <td>@tutor.Nombre</td>
-                    <td>@tutor.Apellidos</td>
-                    <td>@tutor.Correo</td>
-                    <td>@tutor.Telefono</td>
-                    <td>@tutor.Especialidad</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No se encontraron tutores desde la API.</p>
-}
+        }
+    </tbody>
+</table>
